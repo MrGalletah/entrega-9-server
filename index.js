@@ -36,8 +36,8 @@ app.get("/products/:index", (req,res)=>{
 });
 
 app.get("/products-info/:index", (req,res)=>{
-    const productsComments = require(`./emercado-api-main/products/${req.params.index}.json`);
-    res.json(productsComments)
+    const productsInfo = require(`./emercado-api-main/products/${req.params.index}.json`);
+    res.json(productsInfo)
 });
 
 app.get("/products-comments/:index", (req,res)=>{
@@ -46,12 +46,12 @@ app.get("/products-comments/:index", (req,res)=>{
 });
 
 app.get("/buy",(req,res)=>{
-    const publish = require("./emercado-api-main/cart/buy.json");
-    res.json(publish)
+    const buy = require("./emercado-api-main/cart/buy.json");
+    res.json(buy)
 });
 app.get("/usercart",(req,res)=>{
-    const publish = require("./emercado-api-main/user_cart/25801.json");
-    res.json(publish)
+    const userCart = require("./emercado-api-main/user_cart/25801.json");
+    res.json(userCart)
 });
 
 app.listen(port, () => {
