@@ -68,13 +68,3 @@ app.get("/usercart",(req,res)=>{
 app.listen(port, () => {
   console.log(`Servidor corriendo en http://localhost:${port}`);
 });
-
-app.post("/login", (req, res) => {
-  const {user, password} = req.body;
-  if(user == "userVerified" && password == "passwordVerified") {
-    const token = jwt.sign({user}, KEY);
-    res.status(200).json({token});
-  } else {
-    res.status(401).json({messagge: "Usuario y/o contraseña incorrecta"});
-  };
-});
