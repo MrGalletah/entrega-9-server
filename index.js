@@ -1,11 +1,12 @@
 const express = require("express");
-
+const jwt = require("jsonwebtoken");
 const port = 3000;
+const KEY = "logginSuccess";
 
 const app = express();
+const categories = require("./emercado-api-main/cats/cat.json");
 
-
-
+app.use(express.json());
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -30,14 +31,24 @@ app.get("/publish",(req,res)=>{
     res.json(publish)
 });
 
+app.post("/login", (req, res) => {
+  const {user, password} = req.body;   
+  if(user == "userVerified" && password == "passwordVerified") {
+    const token = jwt.sign({user}, KEY);
+    res.status(200).json({token});
+  } else {
+    res.status(401).json({messagge: "Usuario y/o contraseña incorrecta"});
+  };
+});
+
 app.get("/products/:index", (req,res)=>{
     const products = require(`./emercado-api-main/cats_products/${req.params.index}.json`);
     res.json(products)
 });
 
 app.get("/products-info/:index", (req,res)=>{
-    const productsComments = require(`./emercado-api-main/products/${req.params.index}.json`);
-    res.json(productsComments)
+    const productsInfo = require(`./emercado-api-main/products/${req.params.index}.json`);
+    res.json(productsInfo)
 });
 
 app.get("/products-comments/:index", (req,res)=>{
@@ -46,12 +57,12 @@ app.get("/products-comments/:index", (req,res)=>{
 });
 
 app.get("/buy",(req,res)=>{
-    const publish = require("./emercado-api-main/cart/buy.json");
-    res.json(publish)
+    const buy = require("./emercado-api-main/cart/buy.json");
+    res.json(buy)
 });
 app.get("/usercart",(req,res)=>{
-    const publish = require("./emercado-api-main/user_cart/25801.json");
-    res.json(publish)
+    const userCart = require("./emercado-api-main/user_cart/25801.json");
+    res.json(userCart)
 });
 
 app.listen(port, () => {
