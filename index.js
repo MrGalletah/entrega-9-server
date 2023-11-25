@@ -1,21 +1,8 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const mariadb = require('mariadb');
 const port = 3000;
 const KEY = "logginSuccess";
-
-const app = express();
-const categories = require("./emercado-api-main/cats/cat.json");
-
-app.use(express.json());
-
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-});
 
 const authenticateToken = (req, res, next) => {
   const token = req.headers.authorization;
@@ -34,6 +21,62 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+const app = express();
+const categories = require("./emercado-api-main/cats/cat.json");
+
+app.use(express.json());
+
+
+const pool = mariadb.createPool({host: "localhost", user: "root",password: "1234",database: "prueba", connectionLimit: 5});
+
+app.post("/cart", authenticateToken, async (req, res) => {
+  try {
+    const { productIDs } = req.body;
+
+    if (!productIDs || productIDs.length === 0) {
+      return res.status(400).json({ message: "No hay productos para agregar al carrito" });
+    }
+
+    for (const productID of productIDs) {
+      const urlProduct = `http://localhost:3000/products/${productID}`;
+
+      try {
+        const response = await fetch(urlProduct);
+        const product = await response.json();
+
+        const { id, name, description, cost, currency, soldCount, category } = product;
+
+        const insertQuery = `
+          INSERT INTO cart (id, name, description, cost, currency, soldCount, category)
+          VALUES (?, ?, ?, ?, ?, ?, ?);
+        `;
+
+        await pool.query(insertQuery, [id, name, description, cost, currency, soldCount, category]);
+      
+      } catch (error) {
+        console.error(`Error fetching product with ID ${productID}: ${error}`);
+        return res.status(500).json({ message: "Error interno del servidor al agregar productos al carrito" });
+      }
+    }
+
+    res.status(200).json({ message: "Productos agregados al carrito con éxito" });
+  } catch (error) {
+    console.error('Error al procesar la solicitud:', error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
+
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
+
 
 app.get("/", (req, res) => {
   res.send("<h1>Bienvenid@ al servidor</h1>");
