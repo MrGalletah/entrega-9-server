@@ -3,8 +3,10 @@ const jwt = require("jsonwebtoken");
 const mariadb = require('mariadb');
 const port = 3000;
 const KEY = "logginSuccess";
+console.log("LPM")
 
 const authenticateToken = (req, res, next) => {
+  console.log("Authenticating")
   const token = req.headers.authorization;
 
   if (!token) {
@@ -21,24 +23,38 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
 const app = express();
 const categories = require("./emercado-api-main/cats/cat.json");
 
 app.use(express.json());
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
+
 
 const pool = mariadb.createPool({host: "localhost", user: "root",password: "1234",database: "prueba", connectionLimit: 5});
-
-app.post("/cart", authenticateToken, async (req, res) => {
+ console.log("pool")
+ app.post("/cart",  async (req, res) => {
   try {
+    console.log("hola");
+
     const { productIDs } = req.body;
+
+    console.log(req.body);
 
     if (!productIDs || productIDs.length === 0) {
       return res.status(400).json({ message: "No hay productos para agregar al carrito" });
     }
 
     for (const productID of productIDs) {
-      const urlProduct = `http://localhost:3000/products/${productID}`;
+      const urlProduct = `http://localhost:3000/products-info/${productID}`;
 
       try {
         const response = await fetch(urlProduct);
@@ -51,11 +67,16 @@ app.post("/cart", authenticateToken, async (req, res) => {
           VALUES (?, ?, ?, ?, ?, ?, ?);
         `;
 
-        await pool.query(insertQuery, [id, name, description, cost, currency, soldCount, category]);
-      
+        const result = await pool.query(insertQuery, [id, name, description, cost, currency, soldCount, category]);
+
+        if (result.affectedRows !== 1) {
+          console.error(`Error al insertar el producto con ID ${productID} en la base de datos. Resultado:`, result);
+          return res.status(500).json({ message: "Error interno del servidor al agregar productos al carrito" });
+        }
+
       } catch (error) {
         console.error(`Error fetching product with ID ${productID}: ${error}`);
-        return res.status(500).json({ message: "Error interno del servidor al agregar productos al carrito" });
+        return res.status(500).json({ message: "Error interno del servidor al obtener productos del carrito" });
       }
     }
 
@@ -68,14 +89,6 @@ app.post("/cart", authenticateToken, async (req, res) => {
 
 
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-});
 
 
 app.get("/", (req, res) => {
