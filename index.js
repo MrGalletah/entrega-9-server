@@ -43,7 +43,7 @@ const pool = mariadb.createPool({host: "localhost", user: "root",password: "1234
  console.log("pool")
  app.post("/cart",  async (req, res) => {
   try {
-    console.log("hola");
+    console.log("Producto agregado con éxito");
 
     const { productIDs } = req.body;
 
