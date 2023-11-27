@@ -3,12 +3,12 @@ const jwt = require("jsonwebtoken");
 const mariadb = require('mariadb');
 const port = 3000;
 const KEY = "logginSuccess";
-console.log("LPM")
-
+const pool = mariadb.createPool({host: "localhost", user: "root",password: "1234", database: "prueba", connectionLimit: 5});
+ 
 const authenticateToken = (req, res, next) => {
   console.log("Authenticating")
   const token = req.headers.authorization;
-
+  console.log(token);
   if (!token) {
     console.error('Sin token de acceso');
     return res.status(401).json({ message: "Sin token de acceso" });
@@ -25,7 +25,6 @@ const authenticateToken = (req, res, next) => {
 };
 
 const app = express();
-const categories = require("./emercado-api-main/cats/cat.json");
 
 app.use(express.json());
 
@@ -39,9 +38,7 @@ app.use((req, res, next) => {
 });
 
 
-const pool = mariadb.createPool({host: "localhost", user: "root",password: "1234",database: "prueba", connectionLimit: 5});
- console.log("pool")
- app.post("/cart",  async (req, res) => {
+ app.post("/cart", authenticateToken,  async (req, res) => {
   try {
     console.log("Producto agregado con éxito");
 
@@ -88,9 +85,6 @@ const pool = mariadb.createPool({host: "localhost", user: "root",password: "1234
 });
 
 
-
-
-
 app.get("/", (req, res) => {
   res.send("<h1>Bienvenid@ al servidor</h1>");
 });
@@ -107,8 +101,10 @@ app.get("/publish", (req, res) => {
 
 app.post("/login", (req, res) => {
   const { user, password } = req.body;
-  if (user == "userVerified" && password == "passwordVerified") {
+  console.log("Received credentials:", { user, password });
+  if (user === "userVerified" && password === "passwordVerified") {
     const token = jwt.sign({ user }, KEY);
+    console.log('user-verified');
     res.status(200).json({ token });
   } else {
     res.status(401).json({ message: "Usuario y/o contraseña incorrecta" });
